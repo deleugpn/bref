@@ -4,6 +4,7 @@ namespace Bref\Runtime;
 
 use Bref\Context\Context;
 use Bref\Context\ContextBuilder;
+use Bref\Event\ExceptionHandler;
 use Bref\Event\Handler;
 use Bref\Event\Http\Psr15Handler;
 use Exception;
@@ -111,6 +112,10 @@ final class LambdaRuntime
 
             $this->sendResponse($context->getAwsRequestId(), $result);
         } catch (\Throwable $e) {
+            if ($handler instanceof ExceptionHandler) {
+                $handler->error($e);
+            }
+
             $this->signalFailure($context->getAwsRequestId(), $e);
         }
     }
@@ -200,21 +205,6 @@ final class LambdaRuntime
      */
     private function signalFailure(string $invocationId, \Throwable $error): void
     {
-        if ($error instanceof Exception) {
-            $errorMessage = 'Uncaught ' . get_class($error) . ': ' . $error->getMessage();
-        } else {
-            $errorMessage = $error->getMessage();
-        }
-
-        // Log the exception in CloudWatch
-        printf(
-            "Fatal error: %s in %s:%d\nStack trace:\n%s",
-            $errorMessage,
-            $error->getFile(),
-            $error->getLine(),
-            $error->getTraceAsString()
-        );
-
         // Send an "error" Lambda response
         $url = "http://{$this->apiUrl}/2018-06-01/runtime/invocation/$invocationId/error";
         $this->postJson($url, [
