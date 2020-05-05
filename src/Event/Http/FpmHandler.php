@@ -169,7 +169,7 @@ final class FpmHandler extends HttpHandler
 
     private function eventToFastCgiRequest(HttpRequestEvent $event, Context $context): ProvidesRequestData
     {
-        $request = new FastCgiRequest($event->getMethod(), $this->handler, $event->getBody());
+        $request = FastCgiRequest::fromLambdaContext($event->getMethod(), $this->handler, $event->getBody());
         $request->setRequestUri($event->getUri());
         $request->setRemoteAddress('127.0.0.1');
         $request->setRemotePort($event->getRemotePort());

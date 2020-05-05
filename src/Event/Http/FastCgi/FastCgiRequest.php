@@ -12,10 +12,13 @@ final class FastCgiRequest extends AbstractRequest
     /** @var string */
     private $method;
 
-    public function __construct(string $method, string $scriptFilename, string $content)
+    public static function fromLambdaContext(string $method, string $scriptFilename, string $content): self
     {
-        $this->method = $method;
-        parent::__construct($scriptFilename, $content);
+        $request = new self($scriptFilename, $content);
+
+        $request->method = $method;
+
+        return $request;
     }
 
     public function getRequestMethod(): string
